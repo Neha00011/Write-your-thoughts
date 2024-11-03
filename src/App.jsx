@@ -10,6 +10,7 @@ import { Outlet } from "react-router-dom";
 function App() {
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
+
   useEffect(() => {
     authService
       .getCurrentUser()
@@ -21,18 +22,25 @@ function App() {
         }
       })
       .finally(() => setLoading(false));
-  }, []);
-  return !loading ? (
-    <div className="min-h-screen flex flex-wrap content-between bg-gray-400">
-      <div className="w-full block">
-        <Header />
-        <main>
-          <Outlet />
-        </main>
-        <Footer />
-      </div>
+  }, [dispatch]);
+
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-gray-800 to-gray-900 text-white">
+      {loading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <p className="text-lg font-semibold text-gray-400">Loading...</p>
+        </div>
+      ) : (
+        <>
+          <Header />
+          <main className="flex-grow min-h-screen p-6">
+            <Outlet />
+          </main>
+          <Footer />
+        </>
+      )}
     </div>
-  ) : null;
+  );
 }
 
 export default App;

@@ -9,49 +9,29 @@ function Header() {
   const navigate = useNavigate();
 
   const navItems = [
-    {
-      name: "Home",
-      slug: "/",
-      active: true,
-    },
-    {
-      name: "Login",
-      slug: "/login",
-      active: !authStatus,
-    },
-    {
-      name: "Signup",
-      slug: "/signup",
-      active: !authStatus,
-    },
-    {
-      name: "All Posts",
-      slug: "/all-posts",
-      active: authStatus,
-    },
-    {
-      name: "Add Post",
-      slug: "/add-post",
-      active: authStatus,
-    },
+    { name: "Home", slug: "/", active: true },
+    { name: "Login", slug: "/login", active: !authStatus },
+    { name: "Signup", slug: "/signup", active: !authStatus },
+    { name: "All Posts", slug: "/all-posts", active: authStatus },
+    { name: "Add Post", slug: "/add-post", active: authStatus },
   ];
 
   return (
-    <header className="py-3 shadow bg-gray-500">
+    <header className="py-4 bg-gradient-to-r from-purple-600 to-indigo-500 shadow-lg">
       <Container>
-        <nav className="flex">
+        <nav className="flex items-center justify-between">
           <div className="mr-4">
             <Link to="/">
-              <Logo width="100px" />
+              <Logo width="120px" />
             </Link>
           </div>
-          <ul className="flex ml-auto items-center">
+          <ul className="flex items-center space-x-6">
             {navItems.map((item) =>
               item.active ? (
                 <li key={item.name}>
                   <button
                     onClick={() => navigate(item.slug)}
-                    className="inline-bock px-6 py-2 duration-200 hover:bg-blue-100 rounded-full"
+                    className="px-5 py-2 text-white font-medium rounded-full bg-purple-700 hover:bg-purple-800 transition duration-300 ease-in-out"
                   >
                     {item.name}
                   </button>
@@ -60,7 +40,9 @@ function Header() {
             )}
             {authStatus && (
               <li>
-                <LogoutBtn />
+                <LogoutBtn
+                  className="px-5 py-2 ml-4 text-white font-medium bg-red-500 rounded-full hover:bg-red-600 transition duration-300 ease-in-out"
+                />
               </li>
             )}
           </ul>

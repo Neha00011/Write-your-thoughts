@@ -1,14 +1,10 @@
 import React from "react";
-import logo from '../../public/logo.jpg'
+import logo from "../assets/logo.jpg";
 
 function Logo({ width = "100px" }) {
   return (
     <div>
-      <img
-        src={logo}
-        width={width}
-        alt="Logo"
-      ></img>
+      <img src={logo} width={width} alt="Logo"></img>
     </div>
   );
 }

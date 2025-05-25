@@ -36,7 +36,7 @@ function Signup() {
             <Logo width="100%" />
           </span>
         </div>
-        <h2 className="text-center text-2xl font-bold leading-tight">
+        <h2 className="text-center text-black text-2xl font-bold leading-tight">
           Sign up to create account
         </h2>
         <p className="mt-2 text-center text-base text-black/60">
@@ -51,7 +51,7 @@ function Signup() {
         {error && <p className="text-red-600 mt-8 text-center">{error}</p>}
 
         <form onSubmit={handleSubmit(create)}>
-          <div className="space-y-5">
+          <div className="space-y-5 text-black">
             <Input
               label="Full Name: "
               placeholder="Enter your full name"

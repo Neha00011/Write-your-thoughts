@@ -1,19 +1,146 @@
+// import conf from "../conf/conf.js";
+// import { Client, ID, Databases, Storage, Query } from "appwrite";
+
+// export class Service {
+//   client = new Client();
+//   databases;
+//   bucket;
+
+//   constructor() {
+//     this.client
+//       .setEndpoint(conf.appwriteUrl)
+//       .setProject(conf.appwriteProjectId);
+//     this.databases = new Databases(this.client);
+//     this.bucket = new Storage(this.client);
+//   }
+
+//   async createPost({ title, slug, content, featuredImage, status, userId }) {
+//     try {
+//       return await this.databases.createDocument(
+//         conf.appwriteDatabaseId,
+//         conf.appwriteCollectionId,
+//         slug,
+//         {
+//           title,
+//           content,
+//           featuredImage,
+//           status,
+//           userid:userId,
+//         }
+//       );
+//     } catch (error) {
+//       console.log("Appwrite serive :: createPost :: error", error);
+//     }
+//   }
+
+//   async updatePost(slug, { title, content, featuredImage, status }) {
+//     try {
+//       return await this.databases.updateDocument(
+//         conf.appwriteDatabaseId,
+//         conf.appwriteCollectionId,
+//         slug,
+//         {
+//           title,
+//           content,
+//           featuredImage,
+//           status,
+//         }
+//       );
+//     } catch (error) {
+//       console.log("Appwrite serive :: updatePost :: error", error);
+//     }
+//   }
+
+//   async deletePost(slug) {
+//     try {
+//       await this.databases.deleteDocument(
+//         conf.appwriteDatabaseId,
+//         conf.appwriteCollectionId,
+//         slug
+//       );
+//       return true;
+//     } catch (error) {
+//       console.log("Appwrite serive :: deletePost :: error", error);
+//       return false;
+//     }
+//   }
+
+//   async getPost(slug) {
+//     try {
+//       return await this.databases.getDocument(
+//         conf.appwriteDatabaseId,
+//         conf.appwriteCollectionId,
+//         slug
+//       );
+//     } catch (error) {
+//       console.log("Appwrite serive :: getPost :: error", error);
+//       return false;
+//     }
+//   }
+
+//   async getPosts(queries = [Query.equal("status", "active")]) {
+//     try {
+//       return await this.databases.listDocuments(
+//         conf.appwriteDatabaseId,
+//         conf.appwriteCollectionId,
+//         queries
+//       );
+//     } catch (error) {
+//       console.log("Appwrite serive :: getPosts :: error", error);
+//       return false;
+//     }
+//   }
+
+//   // file upload service
+
+//   async uploadFile(file) {
+//     try {
+//       return await this.bucket.createFile(
+//         conf.appwriteBucketId,
+//         ID.unique(),
+//         file
+//       );
+//     } catch (error) {
+//       console.log("Appwrite serive :: uploadFile :: error", error);
+//       return false;
+//     }
+//   }
+
+//   async deleteFile(fileId) {
+//     try {
+//       await this.bucket.deleteFile(conf.appwriteBucketId, fileId);
+//       return true;
+//     } catch (error) {
+//       console.log("Appwrite serive :: deleteFile :: error", error);
+//       return false;
+//     }
+//   }
+
+//   getFilePreview(fileId) {
+//     return this.bucket.getFilePreview(conf.appwriteBucketId, fileId);
+//   }
+// }
+
+// const service = new Service();
+// export default service;
+
 import conf from "../conf/conf.js";
-import { Client, ID, Databases, Storage, Query } from "appwrite";
+import { Client, Databases, Query } from "appwrite";
+import sha1 from "crypto-js/sha1";
 
 export class Service {
   client = new Client();
   databases;
-  bucket;
 
   constructor() {
     this.client
       .setEndpoint(conf.appwriteUrl)
       .setProject(conf.appwriteProjectId);
+
     this.databases = new Databases(this.client);
-    this.bucket = new Storage(this.client);
   }
 
+  /* ----------------------------- POSTS (Appwrite) ---------------------------- */
   async createPost({ title, slug, content, featuredImage, status, userId }) {
     try {
       return await this.databases.createDocument(
@@ -25,11 +152,11 @@ export class Service {
           content,
           featuredImage,
           status,
-          userid:userId,
+          userid: userId,
         }
       );
     } catch (error) {
-      console.log("Appwrite serive :: createPost :: error", error);
+      console.log("Appwrite service :: createPost :: error", error);
     }
   }
 
@@ -47,7 +174,7 @@ export class Service {
         }
       );
     } catch (error) {
-      console.log("Appwrite serive :: updatePost :: error", error);
+      console.log("Appwrite service :: updatePost :: error", error);
     }
   }
 
@@ -60,7 +187,7 @@ export class Service {
       );
       return true;
     } catch (error) {
-      console.log("Appwrite serive :: deletePost :: error", error);
+      console.log("Appwrite service :: deletePost :: error", error);
       return false;
     }
   }
@@ -73,7 +200,7 @@ export class Service {
         slug
       );
     } catch (error) {
-      console.log("Appwrite serive :: getPost :: error", error);
+      console.log("Appwrite service :: getPost :: error", error);
       return false;
     }
   }
@@ -86,38 +213,85 @@ export class Service {
         queries
       );
     } catch (error) {
-      console.log("Appwrite serive :: getPosts :: error", error);
+      console.log("Appwrite service :: getPosts :: error", error);
       return false;
     }
   }
 
-  // file upload service
-
+  /* -------------------------- FILES (Cloudinary) --------------------------- */
+  /**
+   * Upload a file to Cloudinary (unsigned upload)
+   * @param {File} file
+   * @returns {{ url: string, public_id: string }}
+   */
   async uploadFile(file) {
     try {
-      return await this.bucket.createFile(
-        conf.appwriteBucketId,
-        ID.unique(),
-        file
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", conf.cloudinaryUploadPreset);
+      if (conf.cloudinaryFolder) {
+        formData.append("folder", conf.cloudinaryFolder);
+      }
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${conf.cloudinaryCloudName}/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
       );
+
+      const data = await res.json();
+      return { url: data.secure_url, public_id: data.public_id };
     } catch (error) {
-      console.log("Appwrite serive :: uploadFile :: error", error);
+      console.log("Cloudinary :: uploadFile :: error", error);
       return false;
     }
   }
 
-  async deleteFile(fileId) {
+  /**
+   * Delete a file from Cloudinary (signed request – run on server)
+   * @param {string} publicId
+   * @returns {boolean}
+   */
+  async deleteFile(publicId) {
     try {
-      await this.bucket.deleteFile(conf.appwriteBucketId, fileId);
-      return true;
+      const timestamp = Math.floor(Date.now() / 1000);
+      const signature = sha1(
+        `public_id=${publicId}&timestamp=${timestamp}${conf.cloudinaryApiSecret}`
+      ).toString();
+
+      const body = new URLSearchParams({
+        public_id: publicId,
+        api_key: conf.cloudinaryApiKey,
+        timestamp: timestamp.toString(),
+        signature,
+      });
+
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${conf.cloudinaryCloudName}/image/destroy`,
+        {
+          method: "POST",
+          body,
+        }
+      );
+
+      const result = await res.json();
+      return result.result === "ok";
     } catch (error) {
-      console.log("Appwrite serive :: deleteFile :: error", error);
+      console.log("Cloudinary :: deleteFile :: error", error);
       return false;
     }
   }
 
-  getFilePreview(fileId) {
-    return this.bucket.getFilePreview(conf.appwriteBucketId, fileId);
+  /**
+   * Build a CDN URL for an existing Cloudinary public_id
+   * @param {string} publicId
+   * @param {string} [options] Cloudinary transformations (default: auto‑quality & format)
+   * @returns {string}
+   */
+  getFilePreview(publicId, options = "q_auto,f_auto") {
+    return `https://res.cloudinary.com/${conf.cloudinaryCloudName}/image/upload/${options}/${publicId}.jpg`;
   }
 }
 
